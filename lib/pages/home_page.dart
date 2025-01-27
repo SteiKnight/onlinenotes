@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinenotes/models/note_card.dart';
 import 'package:onlinenotes/services/firestore.dart';
@@ -20,7 +21,13 @@ class _HomePageState extends State<HomePage> {
   void editNote() {}
 
   //open a dialog input box
-  void openNoteBox() {
+  void openNoteBox({String? docID}) {
+    String button;
+    if (docID == null) {
+      button = 'ADD';
+    } else {
+      button = 'UPDATE';
+    }
     showDialog(
       context: context,
       builder: (context) {
@@ -33,7 +40,11 @@ class _HomePageState extends State<HomePage> {
             ElevatedButton(
               onPressed: () {
                 //add note
-                firestoreService.addNote(controller.text);
+                if (docID == null) {
+                  firestoreService.addNote(controller.text);
+                } else {
+                  firestoreService.updateNote(docID, controller.text);
+                }
 
                 //clear controller
                 controller.clear();
@@ -41,7 +52,7 @@ class _HomePageState extends State<HomePage> {
                 //pop dialog box
                 Navigator.pop(context);
               },
-              child: Text('Add'),
+              child: Text(button),
             ),
             //cancel button
           ],
@@ -65,7 +76,9 @@ class _HomePageState extends State<HomePage> {
           centerTitle: true,
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: openNoteBox,
+          onPressed: () {
+            openNoteBox();
+          },
           child: Icon(
             Icons.add,
           ),
@@ -75,10 +88,38 @@ class _HomePageState extends State<HomePage> {
           children: [
             SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: 1,
-                itemBuilder: (context, index) {
-                  return NoteCard();
+              child: StreamBuilder<QuerySnapshot>(
+                stream: firestoreService.getNotesStream(),
+                builder: (context, snapshot) {
+                  //if we have data, get all the docs
+                  if (snapshot.hasData) {
+                    List notesList = snapshot.data!.docs;
+
+                    //return a list view
+                    return ListView.builder(
+                      itemCount: notesList.length,
+                      itemBuilder: (context, index) {
+                        //get each individual doc
+                        DocumentSnapshot document = notesList[index];
+                        String docID = document.id;
+
+                        //get note from each doc
+                        Map<String, dynamic> data =
+                            document.data() as Map<String, dynamic>;
+                        String noteText = data['note'];
+                        //display a list tile
+                        return NoteCard(
+                          text: noteText,
+                          edit: () => openNoteBox(docID: docID),
+                          delete: () => firestoreService.deleteNote(docID),
+                        );
+                      },
+                    );
+                  }
+                  //if there is no data
+                  else {
+                    return const Text("No notes...");
+                  }
                 },
               ),
             ),

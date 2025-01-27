@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 
 class NoteCard extends StatelessWidget {
-  const NoteCard({super.key});
+  void Function()? edit;
+  void Function()? delete;
+  final String text;
+  NoteCard({
+    super.key,
+    required this.text,
+    required this.edit,
+    required this.delete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    void settingsCard() {}
-    void deleteCard() {}
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 25),
+      margin: EdgeInsets.only(
+        left: 25,
+        right: 25,
+        bottom: 10,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.white,
@@ -19,7 +29,7 @@ class NoteCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Hello World',
+              text,
               style: TextStyle(
                 fontSize: 16,
               ),
@@ -27,12 +37,12 @@ class NoteCard extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  onPressed: settingsCard,
+                  onPressed: edit,
                   icon: Icon(Icons.settings, color: Colors.grey),
                 ),
                 SizedBox(width: 0),
                 IconButton(
-                  onPressed: deleteCard,
+                  onPressed: delete,
                   icon: Icon(Icons.delete, color: Colors.grey),
                 ),
               ],
